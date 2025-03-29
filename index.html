@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MG Mart - Scan & Shop</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f7f7f7, #e0f7fa);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        :root {
+            --primary-color: #e91e63;
+            --secondary-color: #4caf50;
+            --background-color: #ffffff;
+            --text-color: #333333;
+            --discount-color: #d81b60;
+            --hover-color: #c2185b;
+            --shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            --gradient: linear-gradient(45deg, #ff6f61, #e91e63);
+        }
+
+        .navbar {
+            background-color: var(--background-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-links li a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links li a:hover {
+            color: var(--primary-color);
+        }
+
+        .banner {
+            background: var(--gradient);
+            color: #fff;
+            text-align: center;
+            padding: 60px 20px;
+            margin-bottom: 40px;
+            border-bottom: 4px solid var(--secondary-color);
+            box-shadow: var(--shadow);
+        }
+
+        .banner h1 {
+            font-size: 42px;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .banner p {
+            font-size: 20px;
+            margin-bottom: 25px;
+        }
+
+        .shop-now {
+            padding: 12px 25px;
+            background-color: var(--secondary-color);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .shop-now:hover {
+            background-color: #388e3c;
+            transform: scale(1.05);
+        }
+
+        .scanner {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: var(--background-color);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            border: 2px solid var(--primary-color);
+        }
+
+        .scanner h2 {
+            margin-bottom: 20px;
+            color: var(--text-color);
+            font-size: 26px;
+        }
+
+        #qr-input {
+            width: 80%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .scan-button, .quick-add, .capture-button {
+            padding: 12px 25px;
+            background: var(--gradient);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .scan-button:hover, .quick-add:hover, .capture-button:hover {
+            transform: scale(1.05);
+        }
+
+        .video-container {
+            margin: 20px auto;
+            display: none;
+            max-width: 640px;
+            position: relative;
+        }
+
+        #qr-video {
+            max-width: 100%;
+            border: 2px solid var(--secondary-color);
+            border-radius: 5px;
+        }
+
+        #qr-canvas {
+            display: none;
+        }
+
+        .scan-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 70%;
+            border: 2px dashed #fff;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        .product-details {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: var(--background-color);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            display: none;
+            text-align: center;
+        }
+
+        .product-details h3 {
+            margin-bottom: 15px;
+            color: var(--text-color);
+            font-size: 24px;
+        }
+
+        .product-details img {
+            max-width: 250px;
+            height: auto;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .product-details .price {
+            font-size: 20px;
+            color: var(--discount-color);
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .product-details .old-price {
+            text-decoration: line-through;
+            color: #888;
+            margin-left: 5px;
+            font-size: 16px;
+        }
+
+        .add-to-cart {
+            padding: 12px 25px;
+            background: var(--gradient);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .add-to-cart:hover {
+            transform: scale(1.05);
+        }
+
+        .cart {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: var(--background-color);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        .cart h2 {
+            margin-bottom: 20px;
+            color: var(--text-color);
+            font-size: 26px;
+        }
+
+        #cart-items {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        #cart-total {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--text-color);
+        }
+
+        #loyalty-points {
+            font-size: 16px;
+            color: var(--secondary-color);
+            margin-top: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background-color: var(--background-color);
+            padding: 25px;
+            border-radius: 10px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: var(--text-color);
+            font-size: 24px;
+        }
+
+        .modal-content select, .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .modal-content button {
+            padding: 12px 25px;
+            background-color: var(--secondary-color);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .modal-content button:hover {
+            background-color: #388e3c;
+            transform: scale(1.05);
+        }
+
+        .footer {
+            background: var(--gradient);
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .footer a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #ffeb3b;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .banner h1 {
+                font-size: 28px;
+            }
+            .banner p {
+                font-size: 16px;
+            }
+            .scanner, .product-details, .cart {
+                padding: 15px;
+                margin: 10px;
+            }
+            .modal-content {
+                width: 90%;
+            }
+            .video-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">MG Mart</div>
+        <ul class="nav-links">
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Scan & Shop</a></li>
+            <li><a href="#" onclick="showCart()">Cart</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+
+    <section class="banner">
+        <h1>Scan & Shop with MG Mart!</h1>
+        <p>Discover a vibrant shopping experience with QR codes</p>
+        <button class="shop-now">Start Shopping</button>
+    </section>
+
+    <section class="scanner">
+        <h2>Scan QR Code</h2>
+        <input type="text" id="qr-input" placeholder="Enter QR code manually">
+        <button class="scan-button" onclick="scanQR()">Manual Scan</button>
+        <button class="scan-button" onclick="startCameraScan()">Camera Scan</button>
+        <div class="video-container" id="video-container">
+            <video id="qr-video" autoplay></video>
+            <canvas id="qr-canvas"></canvas>
+            <div class="scan-overlay"></div>
+            <button class="scan-button" onclick="stopCameraScan()">Stop Camera</button>
+            <button class="capture-button" onclick="capturePhoto()">Capture Photo</button>
+        </div>
+    </section>
+
+    <section class="product-details" id="product-details">
+        <h3 id="product-name"></h3>
+        <img id="product-image" src="" alt="Product Image">
+        <p id="product-description"></p>
+        <p class="price" id="product-price"></p>
+        <button class="add-to-cart" onclick="addToCartFromDetails()">Add to Cart</button>
+        <button class="quick-add" onclick="quickAddAndPay()">Quick Add & Pay</button>
+    </section>
+
+    <section class="cart" id="cart-section">
+        <h2>Your Cart</h2>
+        <div id="cart-items"></div>
+        <p id="cart-total">Total: ₹0</p>
+        <p id="loyalty-points">Loyalty Points Earned: 0</p>
+        <button onclick="showCheckout()">Proceed to Checkout</button>
+    </section>
+
+    <div class="modal" id="checkout-modal">
+        <div class="modal-content">
+            <h2>Checkout</h2>
+            <p>Total Amount: <span id="modal-total">₹0</span></p>
+            <select id="payment-method">
+                <option value="cod">Cash on Delivery</option>
+                <option value="upi">UPI</option>
+                <option value="card">Credit/Debit Card</option>
+                <option value="netbanking">Net Banking</option>
+                <option value="paypal">PayPal</option>
+                <option value="gpay">Google Pay</option>
+                <option value="phonepe">PhonePe</option>
+            </select>
+            <input type="text" id="payment-details" placeholder="Enter payment details (e.g., UPI ID)">
+            <button onclick="initiateTwoStepVerification()">Pay Now</button>
+            <button onclick="closeCheckout()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal" id="otp-modal">
+        <div class="modal-content">
+            <h2>Two-Step Verification</h2>
+            <p>Enter the OTP sent to your registered email/phone</p>
+            <input type="text" id="otp-input" placeholder="Enter OTP">
+            <button onclick="verifyOTP()">Verify</button>
+            <button onclick="closeOTPModal()">Cancel</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2025 MG Mart. All Rights Reserved. | <a href="#">FAQs</a> | <a href="#">Contact Us</a></p>
+    </footer>
+
+    <script>
+        let cart = [];
+        let currentProduct = null;
+        let loyaltyPoints = 0;
+        let generatedOTP = null;
+        let videoStream = null;
+        let scanningActive = false;
+        let videoReady = false;
+
+        // Product database with the QR code "QR12349"
+        const products = {
+            "QR12345": { name: "Rice 5kg", price: 250, oldPrice: 300, description: "Premium quality basmati rice, 5kg pack.", image: "https://via.placeholder.com/200?text=Rice" },
+            "QR12346": { name: "Detergent 1kg", price: 120, oldPrice: 150, description: "Powerful stain removal detergent, 1kg.", image: "https://via.placeholder.com/200?text=Detergent" },
+            "QR12347": { name: "Shampoo 500ml", price: 180, oldPrice: 200, description: "Nourishing shampoo for all hair types, 500ml.", image: "https://via.placeholder.com/200?text=Shampoo" },
+            "QR12348": { name: "Oil 1L", price: 150, oldPrice: 180, description: "Pure edible oil, 1 liter.", image: "https://via.placeholder.com/200?text=Oil" },
+            "QR12349": { name: "Toothpaste 200g", price: 90, oldPrice: 110, description: "Fresh mint toothpaste, 200g pack.", image: "https://via.placeholder.com/200?text=Toothpaste" }
+        };
+
+        function scanQR() {
+            const qrCode = document.getElementById("qr-input").value.trim();
+            if (qrCode) {
+                processQR(qrCode);
+            } else {
+                alert("Please enter a QR code!");
+            }
+        }
+
+        function startCameraScan() {
+            const video = document.getElementById("qr-video");
+            const videoContainer = document.getElementById("video-container");
+
+            if (scanningActive) return;
+            scanningActive = true;
+            videoReady = false;
+
+            videoContainer.style.display = "block";
+
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: "environment",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                } 
+            })
+                .then(stream => {
+                    videoStream = stream;
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        console.log("Video metadata loaded, starting playback...");
+                        video.play().then(() => {
+                            console.log("Video playback started.");
+                            setTimeout(() => {
+                                if (video.videoWidth > 0 && video.videoHeight > 0) {
+                                    videoReady = true;
+                                    console.log("Video is ready for capture.");
+                                } else {
+                                    console.error("Video dimensions not available.");
+                                    alert("Video feed is not fully loaded. Please try again.");
+                                    stopCameraScan();
+                                }
+                            }, 1000); // Increased delay to ensure video stabilization
+                        }).catch(err => {
+                            console.error("Error playing video:", err);
+                            alert("Failed to start video playback: " + err.message);
+                            stopCameraScan();
+                        });
+                    };
+                })
+                .catch(err => {
+                    console.error("Camera access error:", err);
+                    alert("Camera access denied: " + err.message);
+                    scanningActive = false;
+                    videoContainer.style.display = "none";
+                });
+        }
+
+        // Removed the tick() function since we only need to capture a single frame
+
+        function capturePhoto() {
+            const video = document.getElementById("qr-video");
+            const canvas = document.getElementById("qr-canvas");
+            const context = canvas.getContext("2d");
+            const captureButton = document.querySelector(".capture-button");
+
+            console.log("Capture button clicked.");
+
+            if (!scanningActive) {
+                console.error("Scanning not active.");
+                alert("Please start the camera scan first.");
+                captureButton.disabled = false;
+                captureButton.textContent = "Capture Photo";
+                return;
+            }
+
+            if (!videoReady || video.readyState !== video.HAVE_ENOUGH_DATA || video.videoWidth === 0 || video.videoHeight === 0) {
+                console.error("Video not ready:", {
+                    videoReady: videoReady,
+                    readyState: video.readyState,
+                    videoWidth: video.videoWidth,
+                    videoHeight: video.videoHeight
+                });
+                alert("Video feed is not ready. Please wait a moment and try again.");
+                captureButton.disabled = false;
+                captureButton.textContent = "Capture Photo";
+                return;
+            }
+
+            console.log("Capturing photo...");
+            captureButton.disabled = true;
+            captureButton.textContent = "Processing...";
+
+            try {
+                // Set canvas dimensions and draw the current video frame
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Get image data from the canvas
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                console.log("Image data captured:", imageData.width, "x", imageData.height);
+
+                // Attempt to decode the QR code
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "attemptBoth"
+                });
+
+                if (code) {
+                    console.log("QR Code detected:", code.data);
+                    processQR(code.data);
+                    stopCameraScan();
+                } else {
+                    console.log("No QR code detected in captured image.");
+                    alert("No QR code detected. Please ensure the QR code is clear, well-lit, and within the overlay.");
+                }
+            } catch (error) {
+                console.error("Error during QR detection:", error.message, error.stack);
+                alert("An error occurred while processing the QR code: " + error.message + ". Please try again.");
+            } finally {
+                // Always reset the button state, even if an error occurs
+                captureButton.disabled = false;
+                captureButton.textContent = "Capture Photo";
+            }
+        }
+
+        function stopCameraScan() {
+            const video = document.getElementById("qr-video");
+            const videoContainer = document.getElementById("video-container");
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                videoStream = null;
+            }
+            scanningActive = false;
+            videoReady = false;
+            videoContainer.style.display = "none";
+        }
+
+        function processQR(qrCode) {
+            if (products[qrCode]) {
+                currentProduct = products[qrCode];
+                displayProductDetails();
+                document.getElementById("product-details").style.display = "block";
+                document.getElementById("qr-input").value = "";
+            } else {
+                alert("Invalid QR code! Please try a valid one (e.g., QR12349 for Toothpaste).");
+            }
+        }
+
+        function displayProductDetails() {
+            document.getElementById("product-name").textContent = currentProduct.name;
+            document.getElementById("product-image").src = currentProduct.image;
+            document.getElementById("product-description").textContent = currentProduct.description;
+            document.getElementById("product-price").innerHTML = "₹" + currentProduct.price + " <span class='old-price'>₹" + currentProduct.oldPrice + "</span>";
+        }
+
+        function addToCartFromDetails() {
+            if (currentProduct) {
+                cart.push(currentProduct);
+                updateLoyaltyPoints(currentProduct.price);
+                alert(currentProduct.name + " added to cart!");
+                updateCart();
+            }
+        }
+
+        function quickAddAndPay() {
+            if (currentProduct) {
+                cart.push(currentProduct);
+                updateLoyaltyPoints(currentProduct.price);
+                showCheckout();
+            }
+        }
+
+        function showCart() {
+            document.getElementById("cart-section").style.display = "block";
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartItems = document.getElementById("cart-items");
+            const cartTotal = document.getElementById("cart-total");
+            const loyaltyPointsDisplay = document.getElementById("loyalty-points");
+            cartItems.innerHTML = "";
+            let total = 0;
+            cart.forEach(item => {
+                const div = document.createElement("div");
+                div.textContent = item.name + " - ₹" + item.price;
+                cartItems.appendChild(div);
+                total += item.price;
+            });
+            cartTotal.textContent = "Total: ₹" + total;
+            loyaltyPointsDisplay.textContent = "Loyalty Points Earned: " + loyaltyPoints;
+        }
+
+        function updateLoyaltyPoints(amount) {
+            loyaltyPoints += Math.floor(amount / 10);
+        }
+
+        function showCheckout() {
+            if (cart.length === 0) {
+                alert("Your cart is empty!");
+                return;
+            }
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById("modal-total").textContent = "₹" + total;
+            document.getElementById("checkout-modal").style.display = "flex";
+        }
+
+        function closeCheckout() {
+            document.getElementById("checkout-modal").style.display = "none";
+        }
+
+        function initiateTwoStepVerification() {
+            const method = document.getElementById("payment-method").value;
+            const details = document.getElementById("payment-details").value;
+            if (!details && method !== "cod") {
+                alert("Please enter payment details!");
+                return;
+            }
+            generatedOTP = Math.floor(1000 + Math.random() * 9000);
+            alert("OTP sent: " + generatedOTP + " (For demo purposes, check this alert)");
+            document.getElementById("checkout-modal").style.display = "none";
+            document.getElementById("otp-modal").style.display = "flex";
+        }
+
+        function verifyOTP() {
+            const enteredOTP = document.getElementById("otp-input").value;
+            if (enteredOTP == generatedOTP) {
+                completePayment();
+            } else {
+                alert("Invalid OTP! Please try again.");
+            }
+        }
+
+        function closeOTPModal() {
+            document.getElementById("otp-modal").style.display = "none";
+        }
+
+        function completePayment() {
+            const method = document.getElementById("payment-method").value;
+            alert("Payment successful via " + method + "! Thank you for shopping with MG Mart. You earned " + loyaltyPoints + " loyalty points.");
+            cart = [];
+            loyaltyPoints = 0;
+            updateCart();
+            document.getElementById("cart-section").style.display = "none";
+            closeOTPModal();
+        }
+    </script>
+</body>
+</html>
